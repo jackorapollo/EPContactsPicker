@@ -16,6 +16,8 @@ import Contacts
     optional    func epContactPicker(_: EPContactsPicker, didSelectContact contact: EPContact)
     optional    func epContactPicker(_: EPContactsPicker, didSelectMultipleContacts contacts: [EPContact])
 
+    //expose to allow ability to filter contacts as they're enumerated
+    optional    func shouldShowContact(contact: CNContact) -> Bool
 }
 
 typealias ContactsHandler = (contacts : [CNContact] , error : NSError?) -> Void
@@ -48,8 +50,7 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
     override public func viewDidLoad() {
         super.viewDidLoad()
         self.title = EPGlobalConstants.Strings.contactsTitle
-
-        let nib = UINib(nibName: "EPContactCell", bundle: NSBundle(forClass: EPContactsPicker.self))
+        let nib = UINib(nibName: "EPContactCell", bundle: NSBundle.mainBundle())
         tableView.registerNib(nib, forCellReuseIdentifier: "Cell")
         
         inititlizeBarButtons()
@@ -76,7 +77,6 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
         if multiSelectEnabled {
             let doneButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.Done, target: self, action: "onTouchDoneButton")
             self.navigationItem.rightBarButtonItem = doneButton
-            
         }
     }
 
@@ -130,8 +130,8 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
                 
                 let productName = NSBundle.mainBundle().infoDictionary!["CFBundleName"]!
                 
-                let alert = UIAlertController(title: "Unable to access contacts", message: "\(productName) does not have access to contacts. Kindly enable it in privacy settings ", preferredStyle: UIAlertControllerStyle.Alert)
-                let okAction = UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: {  action in
+                let alert = UIAlertController(title: "Unable to access contacts", message: "\(productName) does not have access to contacts. Kindly enable it in your device's privacy settings ", preferredStyle: .Alert)
+                let okAction = UIAlertAction(title: "Ok", style: .Default, handler: {  action in
                     self.contactDelegate?.epContactPicker!(self, didContactFetchFailed: error)
                     completion(contacts: [], error: error)
                     self.dismissViewControllerAnimated(true, completion: nil)
@@ -141,7 +141,7 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
             
             case CNAuthorizationStatus.NotDetermined:
                 //This case means the user is prompted for the first time for allowing contacts
-                contactsStore?.requestAccessForEntityType(CNEntityType.Contacts, completionHandler: { (granted, error) -> Void in
+                contactsStore?.requestAccessForEntityType(.Contacts, completionHandler: { (granted, error) -> Void in
                     //At this point an alert is provided to the user to provide access to contacts. This will get invoked if a user responds to the alert
                     if  (!granted ){
                         dispatch_async(dispatch_get_main_queue(), { () -> Void in
@@ -161,8 +161,14 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
                 
                 do {
                     try contactsStore?.enumerateContactsWithFetchRequest(contactFetchRequest, usingBlock: { (contact, stop) -> Void in
+                        
+                        if self.contactDelegate?.shouldShowContact?(contact) == false {
+                            return
+                        }
+                        
                         //Ordering contacts based on alphabets in firstname
                         contactsArray.append(contact)
+                        
                         var key: String = "#"
                         //If ordering has to be happening via family name change it here.
                         if let firstLetter = contact.givenName[0..<1] where firstLetter.containsAlphabets() {
@@ -182,6 +188,7 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
                         self.sortedContactKeys.removeFirst()
                         self.sortedContactKeys.append("#")
                     }
+                    
                     completion(contacts: contactsArray, error: nil)
                 }
                 //Catching exception as enumerateContactsWithFetchRequest can throw errors
