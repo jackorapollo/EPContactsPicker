@@ -50,7 +50,9 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
     override public func viewDidLoad() {
         super.viewDidLoad()
         self.title = EPGlobalConstants.Strings.contactsTitle
-        let nib = UINib(nibName: "EPContactCell", bundle: NSBundle.mainBundle())
+        
+        let bundle = NSBundle(forClass: self.dynamicType)
+        let nib = UINib(nibName: "EPContactCell", bundle: bundle)
         tableView.registerNib(nib, forCellReuseIdentifier: "Cell")
         
         inititlizeBarButtons()
