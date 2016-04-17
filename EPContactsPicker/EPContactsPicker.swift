@@ -320,11 +320,9 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
             return
         } else if let searchText = resultSearchController.searchBar.text where searchController.active {
             
-            let predicate: NSPredicate
+            var predicate: NSPredicate?
             if searchText.characters.count > 0 {
                 predicate = CNContact.predicateForContactsMatchingName(searchText)
-            } else {
-                predicate = CNContact.predicateForContactsInContainerWithIdentifier(contactsStore!.defaultContainerIdentifier())
             }
             
             let store = CNContactStore()
