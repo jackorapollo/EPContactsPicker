@@ -18,6 +18,6 @@ DESC
   s.requires_arc = true
   s.source_files = 'EPContactsPicker'
   s.frameworks = 'Contacts', 'ContactsUI'
-  s.resources        = ["Pods/EPContactCell.xib"]
+  s.resources        = ["EPContactsPicker/EPContactCell.xib"]
 
 end
