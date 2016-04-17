@@ -44,6 +44,7 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
     
     var subtitleCellValue = SubtitleCellValue.PhoneNumer
     var multiSelectEnabled: Bool = false //Default is single selection contact
+    var isCancelling: Bool = false
     
     // MARK: - Lifecycle Methods
     
@@ -314,7 +315,10 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
     
     public func updateSearchResultsForSearchController(searchController: UISearchController)
     {
-        if let searchText = resultSearchController.searchBar.text where searchController.active {
+        if isCancelling {
+            isCancelling = false
+            return
+        } else if let searchText = resultSearchController.searchBar.text where searchController.active {
             
             let predicate: NSPredicate
             if searchText.characters.count > 0 {
@@ -337,6 +341,7 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
     }
     
     public func searchBarCancelButtonClicked(searchBar: UISearchBar) {
+        isCancelling = true
         searchBar.text = ""
         dispatch_async(dispatch_get_main_queue(), {
             self.tableView.reloadData()
