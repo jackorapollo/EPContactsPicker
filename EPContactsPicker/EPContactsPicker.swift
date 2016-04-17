@@ -329,8 +329,20 @@ public class EPContactsPicker: UITableViewController, UISearchResultsUpdating, U
             
             let store = CNContactStore()
             do {
-                filteredContacts = try store.unifiedContactsMatchingPredicate(predicate,
-                    keysToFetch: allowedContactKeys())
+                filteredContacts.removeAll()
+                
+                let contactFetchRequest = CNContactFetchRequest(keysToFetch: allowedContactKeys())
+                contactFetchRequest.predicate = predicate
+                
+                try store.enumerateContactsWithFetchRequest(contactFetchRequest, usingBlock:
+                { (contact, stop) in
+                    if self.contactDelegate?.shouldShowContact?(contact) == false {
+                        return
+                    }
+                    
+                    self.filteredContacts.append(contact)
+                })
+                
                 print("\(filteredContacts.count) count")
                 self.tableView.reloadData()
             }
